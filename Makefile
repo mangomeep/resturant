@@ -1,7 +1,7 @@
 NAME = server
 SRC = ${NAME}.c
 CC = gcc
-FLAGS = -Wall
+FLAGS = #-Wall
 
 all:
 	${CC} ${FLAGS} ${SRC} -o ${NAME}
