@@ -19,7 +19,7 @@ void error(char *msg) {
 
 void tidy_up(int client) {
 	close(client);
-	printf("\nclosed client socket\n");
+	printf("closed connection\n");
 }
 
 int main() {
@@ -32,16 +32,19 @@ int main() {
 	}
 
 	// address for socket
-	const char *landing_address = "192.168.1.2"; //"INADD_ANY"
+	char *landing_address = "127.0.0.1"; // = "192.168.1.2";
 	
 	// port for socket
-	const int landing_port = 6789;
+	int landing_port; // = 6789;
+	printf("INPUT port to bind socket to: ");
+	scanf("%d", &landing_port);
+	getchar();
 
 	// socket address
 	struct sockaddr_in socket_address;
 	socket_address.sin_family = AF_INET;
 	socket_address.sin_port = htons(landing_port);
-	socket_address.sin_addr.s_addr = inet_addr(landing_address);
+	socket_address.sin_addr.s_addr = inet_addr(landing_address); // = INADDR_ANY; 
 
 	// bind the socket with an address and port
 	int binding;
@@ -58,7 +61,7 @@ int main() {
 	}
 
 	while(true) {
-		printf("\nlistening for connections...\n");
+		printf("\nlistening for a connection...\n");
 		// accept connection
 		int csfd;
 		memset(&csfd, 0, sizeof(csfd));
@@ -84,28 +87,84 @@ int main() {
 		}
 	
 		// process the request
-		char response_buffer[4096];
-		memset(&response_buffer, 0, sizeof(response_buffer));
+		char *request_header = strtok(reading_buffer, "\n");
+		printf("%s\n", request_header);
+		char *request_method = strtok(request_header, " ");
+		char *requested_page = strtok(NULL, " ");
+		char *request_protocol = strtok(NULL, " ");
+		strtok(request_protocol, "/");
+		char *request_protocol_version = strtok(NULL, "\n");
 
 		// checks
-		char status[16];
-		memset(&status, 0, sizeof(status));
-		strcat(status, "200 OK");
-		char file_extension[16];
-		memset(&file_extension, 0, sizeof(file_extension));
-		strcat(file_extension, "plain");
-		char mime_type[16];
-		memset(&mime_type, 0, sizeof(mime_type));
-		strcat(mime_type, "text/");
 		
+		// method checks
+		if(strcmp(request_method, "GET") != 0) {
+			tidy_up(csfd);
+			continue;
+		}
+
+		// file path checks		
+		if(requested_page == NULL) {
+			tidy_up(csfd);
+			continue;
+		}
+
+		char *requested_file_path;
+		char test_file_path[32] = "./site";
+		strcat(test_file_path, requested_page);
+
+		FILE *test_file;
+		test_file = fopen(test_file_path, "r");
+		
+		char *status = "200 OK";
+
+		if(test_file == NULL) {
+			requested_file_path = "/404.html";
+			status = "404 Not Found";
+		}
+		else if(strcmp(requested_page, "/") == 0) {
+			requested_file_path = "/index.html";
+			fclose(test_file);
+		}
+		else {
+			requested_file_path = requested_page;
+			fclose(test_file);
+		}
+
+		// mime type checks
+		char requested_file_path_copy[strlen(requested_file_path)];
+		strcpy(requested_file_path_copy, requested_file_path);
+		strtok(requested_file_path_copy, ".");
+		char *file_extension = strtok(NULL, "\n");
+		char *mime_type;
+		if(strcmp(file_extension, "html") == 0) {
+			mime_type = "text/";
+		}
+		else if(strcmp(file_extension, "css") == 0) {
+			mime_type = "text/";
+		}
+		else {
+			mime_type = "text/";
+			file_extension = "plain";
+		}
+	
 		// init the body
-
-		// make the body
-		strcat(response_buffer, "hello there");
-
-		// get details
+		char response_buffer[4096];
+		memset(&response_buffer, 0, sizeof(response_buffer));
 		char response_buffer_size[20];
-		sprintf(response_buffer_size, "%lu", strlen(response_buffer));
+		memset(&response_buffer_size, 0, sizeof(response_buffer_size));
+
+		char file_path[32] = "./site";
+		strcat(file_path, requested_file_path);
+
+		FILE *file_data;
+		file_data = fopen(file_path, "r");
+		fseek(file_data, 0, SEEK_END);
+		unsigned long file_size = ftell(file_data);
+		sprintf(response_buffer_size, "%lu", file_size);
+		rewind(file_data);
+		fread(response_buffer, 1, file_size, file_data);
+		fclose(file_data);
 
 		// init the http header
 		char writing_buffer[4096];
@@ -142,6 +201,7 @@ int main() {
 			tidy_up(csfd);
 			continue;
 		}
+		printf("served %s\n", file_path);
 	
 		// tidy up
 		tidy_up(csfd);
