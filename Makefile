@@ -1,10 +1,13 @@
 NAME = server
 SRC = ${NAME}.c
 CC = gcc
-FLAGS = #-Wall
+FLAGS = #-Wall -Wextra
 
-all:
+all: build
+
+build:
 	${CC} ${FLAGS} ${SRC} -o ${NAME}
+	@ echo compiled!
 
 clean:
-	rm -f ${NAME}
+	rm -fv ${NAME}
