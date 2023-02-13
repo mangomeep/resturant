@@ -62,9 +62,9 @@ int main() {
 
 	while(true) {
 		printf("\nlistening for a connection...\n");
+
 		// accept connection
 		int csfd;
-		memset(&csfd, 0, sizeof(csfd));
 		csfd = accept(sfd, NULL, NULL);
 		if(csfd < 0) {
 			error("could not accept connection");
@@ -73,7 +73,7 @@ int main() {
 		}
 		printf("\naccepted connection\n");
 	
-		// recieve, process, and request
+		// recieve, process, and respond
 		
 		// recieve data from client
 		char reading_buffer[2048];
@@ -149,10 +149,9 @@ int main() {
 		}
 	
 		// init the body
-		char response_buffer[4096];
+		char response_buffer[2048];
 		memset(&response_buffer, 0, sizeof(response_buffer));
 		char response_buffer_size[20];
-		memset(&response_buffer_size, 0, sizeof(response_buffer_size));
 
 		char file_path[32] = "./site";
 		strcat(file_path, requested_file_path);
@@ -166,28 +165,16 @@ int main() {
 		fread(response_buffer, 1, file_size, file_data);
 		fclose(file_data);
 
-		// init the http header
+		// make the http header
 		char writing_buffer[4096];
 		memset(&writing_buffer, 0, sizeof(writing_buffer));
-		char http_version[16] = "HTTP/1.1 ";
-		char http_status[16];
-		memset(&http_status, 0, sizeof(http_status));
-		strcat(http_status, status);
-		char content_type[32];
-		memset(&content_type, 0, sizeof(content_type));
-		strcat(content_type, mime_type);
-		strcat(content_type, file_extension);
-		char content_length[20];
-		memset(&content_length, 0, sizeof(content_length));
-		strcat(content_length, response_buffer_size);
-
-		// make the http header
-		strcat(writing_buffer, http_version);
-		strcat(writing_buffer, http_status);
+		strcat(writing_buffer, "HTTP/1.1 ");
+		strcat(writing_buffer, status);
 		strcat(writing_buffer, "\r\nContent-Type: ");
-		strcat(writing_buffer, content_type);
+		strcat(writing_buffer, mime_type);
+		strcat(writing_buffer, file_extension);
 		strcat(writing_buffer, "\r\nContent-Length: ");
-		strcat(writing_buffer, content_length);
+		strcat(writing_buffer, response_buffer_size);
 		strcat(writing_buffer, "\r\n\r\n");
 		
 		// merge the response
