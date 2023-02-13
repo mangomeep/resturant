@@ -33,7 +33,7 @@ int main() {
 
 	// address for socket
 	char *landing_address = "127.0.0.1"; // = "192.168.1.2";
-	
+
 	// port for socket
 	int landing_port; // = 6789;
 	printf("INPUT port to bind socket to: ");
@@ -72,9 +72,9 @@ int main() {
 			continue;
 		}
 		printf("\naccepted connection\n");
-	
+
 		// recieve, process, and respond
-		
+
 		// recieve data from client
 		char reading_buffer[2048];
 		memset(&reading_buffer, 0, sizeof(reading_buffer));
@@ -85,7 +85,7 @@ int main() {
 			tidy_up(csfd);
 			continue;
 		}
-	
+
 		// process the request
 		char *request_header = strtok(reading_buffer, "\n");
 		printf("%s\n", request_header);
@@ -96,14 +96,14 @@ int main() {
 		char *request_protocol_version = strtok(NULL, "\n");
 
 		// checks
-		
+
 		// method checks
 		if(strcmp(request_method, "GET") != 0) {
 			tidy_up(csfd);
 			continue;
 		}
 
-		// file path checks		
+		// file path checks
 		if(requested_page == NULL) {
 			tidy_up(csfd);
 			continue;
@@ -115,7 +115,7 @@ int main() {
 
 		FILE *test_file;
 		test_file = fopen(test_file_path, "r");
-		
+
 		char *status = "200 OK";
 
 		if(test_file == NULL) {
@@ -147,7 +147,7 @@ int main() {
 			mime_type = "text/";
 			file_extension = "plain";
 		}
-	
+
 		// init the body
 		char response_buffer[2048];
 		memset(&response_buffer, 0, sizeof(response_buffer));
@@ -176,7 +176,7 @@ int main() {
 		strcat(writing_buffer, "\r\nContent-Length: ");
 		strcat(writing_buffer, response_buffer_size);
 		strcat(writing_buffer, "\r\n\r\n");
-		
+
 		// merge the response
 		strcat(writing_buffer, response_buffer);
 
@@ -189,7 +189,7 @@ int main() {
 			continue;
 		}
 		printf("served %s\n", file_path);
-	
+
 		// tidy up
 		tidy_up(csfd);
 	}
